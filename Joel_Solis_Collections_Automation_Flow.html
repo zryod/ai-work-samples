@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Collections Automation Flow — Joel Solís</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #0A0F1E;
+  --surface: #111827;
+  --card:    #161D2E;
+  --border:  #1E2A40;
+  --border2: #2A3A55;
+  --blue:    #3B82F6;
+  --mid:     #60A5FA;
+  --sky:     #BAE6FD;
+  --green:   #10B981;
+  --lt-green:#064E3B;
+  --red:     #EF4444;
+  --lt-red:  #450A0A;
+  --orange:  #F59E0B;
+  --lt-ora:  #451A03;
+  --purple:  #8B5CF6;
+  --lt-pur:  #2E1065;
+  --gold:    #FBBF24;
+  --white:   #F8FAFC;
+  --muted:   #64748B;
+  --text:    #CBD5E1;
+  --bright:  #E2E8F0;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Syne', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+header {
+  background: linear-gradient(135deg, #0A0F1E 0%, #111827 50%, #0F172A 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 28px 40px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+header::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.h-title { font-size: 1.5rem; font-weight: 800; color: var(--white); letter-spacing: -0.5px; }
+.h-title span { color: var(--blue); }
+.h-sub { font-size: 0.78rem; color: var(--muted); margin-top: 3px; font-family: 'JetBrains Mono', monospace; }
+.h-badge {
+  background: rgba(59,130,246,0.1);
+  border: 1px solid rgba(59,130,246,0.3);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.75rem;
+  color: var(--mid);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── LAYOUT ── */
+.app {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  min-height: calc(100vh - 88px);
+}
+
+/* ── LEFT PANEL — Account Queue ── */
+.left-panel {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+.panel-title {
+  padding: 18px 20px 14px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.badge-count {
+  background: var(--blue);
+  color: white;
+  font-size: 0.68rem;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-weight: 700;
+}
+
+.account-list { overflow-y: auto; flex: 1; }
+
+.account-card {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+.account-card:hover { background: rgba(59,130,246,0.05); }
+.account-card.active {
+  background: rgba(59,130,246,0.1);
+  border-left: 3px solid var(--blue);
+  padding-left: 17px;
+}
+.ac-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 5px;
+}
+.ac-name { font-size: 0.88rem; font-weight: 700; color: var(--bright); }
+.ac-amount { font-size: 0.82rem; font-weight: 700; color: var(--gold); font-family: 'JetBrains Mono', monospace; }
+.ac-meta { font-size: 0.74rem; color: var(--muted); display: flex; gap: 10px; }
+.ac-days { color: var(--text); }
+.risk-chip {
+  font-size: 0.66rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.risk-critical { background: rgba(239,68,68,0.2);  color: #FCA5A5; border: 1px solid rgba(239,68,68,0.3); }
+.risk-high     { background: rgba(245,158,11,0.2); color: #FCD34D; border: 1px solid rgba(245,158,11,0.3); }
+.risk-medium   { background: rgba(59,130,246,0.2); color: #93C5FD; border: 1px solid rgba(59,130,246,0.3); }
+
+/* ── MAIN PANEL ── */
+.main-panel { display: flex; flex-direction: column; }
+
+/* Workflow steps */
+.workflow-bar {
+  display: flex;
+  align-items: center;
+  padding: 16px 28px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  gap: 0;
+  overflow-x: auto;
+}
+.wf-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.wf-step.done    { color: var(--green); }
+.wf-step.active  { color: var(--blue); background: rgba(59,130,246,0.1); }
+.wf-step.pending { color: var(--muted); }
+.wf-arrow { color: var(--border2); margin: 0 2px; font-size: 0.8rem; }
+.wf-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.wf-step.done .wf-dot    { background: var(--green); }
+.wf-step.active .wf-dot  { background: var(--blue); animation: pulse 1.2s infinite; }
+.wf-step.pending .wf-dot { background: var(--border2); }
+@keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(1.3); } }
+
+/* Content area */
+.content-area {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 24px 28px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Cards */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.card-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--bright);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-body { padding: 18px; }
+
+/* Account detail rows */
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.82rem;
+}
+.detail-row:last-child { border-bottom: none; }
+.detail-label { color: var(--muted); }
+.detail-value { color: var(--bright); font-weight: 600; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
+.detail-value.green { color: var(--green); }
+.detail-value.red   { color: var(--red); }
+.detail-value.gold  { color: var(--gold); }
+.detail-value.blue  { color: var(--mid); }
+
+/* AI Classification */
+.classification-box {
+  background: linear-gradient(135deg, rgba(139,92,246,0.1) 0%, rgba(59,130,246,0.05) 100%);
+  border: 1px solid rgba(139,92,246,0.3);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.class-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--purple);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.class-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--white);
+}
+.class-confidence {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Email draft */
+.email-draft {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  overflow: hidden;
+  font-size: 0.82rem;
+}
+.email-headers {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.email-hrow {
+  display: flex;
+  gap: 8px;
+}
+.email-hlabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+  width: 48px;
+  flex-shrink: 0;
+  padding-top: 1px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.email-hval {
+  font-size: 0.78rem;
+  color: var(--text);
+}
+.email-body {
+  padding: 14px 16px;
+  line-height: 1.7;
+  color: var(--text);
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  font-family: 'JetBrains Mono', monospace;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.email-body.streaming::after {
+  content: '▌';
+  color: var(--blue);
+  animation: blink 0.7s infinite;
+}
+@keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+
+/* Action buttons */
+.action-row {
+  display: flex;
+  gap: 8px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.btn {
+  padding: 8px 16px;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: 'Syne', sans-serif;
+  cursor: pointer;
+  border: 1px solid;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: white;
+}
+.btn-primary:hover { background: #2563EB; border-color: #2563EB; }
+.btn-secondary {
+  background: transparent;
+  border-color: var(--border2);
+  color: var(--text);
+}
+.btn-secondary:hover { border-color: var(--mid); color: var(--mid); }
+.btn-danger {
+  background: transparent;
+  border-color: rgba(239,68,68,0.4);
+  color: var(--red);
+}
+.btn-danger:hover { background: rgba(239,68,68,0.1); }
+.btn-success {
+  background: var(--green);
+  border-color: var(--green);
+  color: white;
+}
+.btn-success:hover { background: #059669; border-color: #059669; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Next action panel */
+.next-action {
+  background: linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(59,130,246,0.05) 100%);
+  border: 1px solid rgba(16,185,129,0.25);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.na-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--green);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.na-action {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+.na-reason {
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* Timeline */
+.timeline { display: flex; flex-direction: column; gap: 0; }
+.tl-item {
+  display: flex;
+  gap: 12px;
+  padding-bottom: 14px;
+  position: relative;
+}
+.tl-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 11px; top: 22px;
+  width: 1px;
+  bottom: 0;
+  background: var(--border);
+}
+.tl-dot {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  z-index: 1;
+}
+.tl-content { flex: 1; padding-top: 2px; }
+.tl-title { font-size: 0.82rem; font-weight: 700; color: var(--bright); margin-bottom: 2px; }
+.tl-detail { font-size: 0.75rem; color: var(--muted); line-height: 1.5; }
+.tl-date { font-size: 0.7rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; margin-top: 3px; }
+
+/* Response classifier */
+.response-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.resp-opt {
+  padding: 10px 14px;
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 0.82rem;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.resp-opt:hover { border-color: var(--blue); color: var(--bright); background: rgba(59,130,246,0.05); }
+.resp-opt.selected { border-color: var(--green); background: rgba(16,185,129,0.08); color: var(--green); }
+.resp-icon { font-size: 1rem; flex-shrink: 0; }
+
+/* Log panel */
+.log-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--blue);
+}
+.log-entries {
+  padding: 12px 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.73rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 100px;
+  overflow-y: auto;
+}
+.log-entry { display: flex; gap: 10px; }
+.log-time  { color: var(--muted); flex-shrink: 0; }
+.log-type-ai     { color: var(--blue); }
+.log-type-system { color: var(--green); }
+.log-type-action { color: var(--gold); }
+.log-type-error  { color: var(--red); }
+.log-msg { color: var(--text); }
+
+/* Full-width card */
+.full-width { grid-column: 1 / -1; }
+
+/* Placeholder */
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  grid-column: 1 / -1;
+  color: var(--muted);
+}
+.placeholder-icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.4; }
+.placeholder h3 { font-size: 1rem; color: var(--text); margin-bottom: 8px; }
+.placeholder p  { font-size: 0.82rem; line-height: 1.6; max-width: 320px; }
+
+/* AI indicator */
+.ai-indicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.68rem;
+  color: var(--purple);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+}
+.ai-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--purple);
+  animation: pulse 1.5s infinite;
+}
+
+/* Stats bar */
+.stats-bar {
+  display: flex;
+  gap: 0;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+.stat-item {
+  flex: 1;
+  padding: 12px 20px;
+  border-right: 1px solid var(--border);
+  text-align: center;
+}
+.stat-item:last-child { border-right: none; }
+.stat-val { font-size: 1.3rem; font-weight: 800; color: var(--white); font-family: 'JetBrains Mono', monospace; }
+.stat-lbl { font-size: 0.68rem; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="h-title">Collections <span>Automation</span> Flow</div>
+    <div class="h-sub">AI-powered AR outreach · classify → draft → send → log → follow up</div>
+  </div>
+  <div class="h-badge">Work Sample #3 · Joel Solís · Near Application</div>
+</header>
+
+<!-- Stats bar -->
+<div class="stats-bar">
+  <div class="stat-item">
+    <div class="stat-val" id="stat-total">$815,700</div>
+    <div class="stat-lbl">Total Queue AR</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-val" id="stat-processed">0</div>
+    <div class="stat-lbl">Processed Today</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-val" id="stat-sent">0</div>
+    <div class="stat-lbl">Emails Drafted</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-val" id="stat-escalated">0</div>
+    <div class="stat-lbl">Escalated</div>
+  </div>
+</div>
+
+<div class="app">
+
+  <!-- LEFT: Account queue -->
+  <div class="left-panel">
+    <div class="panel-title">
+      Collections Queue
+      <span class="badge-count" id="queueCount">8</span>
+    </div>
+    <div class="account-list" id="accountList"></div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-panel">
+
+    <!-- Workflow bar -->
+    <div class="workflow-bar">
+      <div class="wf-step pending" id="wf1"><div class="wf-dot"></div> Select Account</div>
+      <div class="wf-arrow">›</div>
+      <div class="wf-step pending" id="wf2"><div class="wf-dot"></div> AI Classification</div>
+      <div class="wf-arrow">›</div>
+      <div class="wf-step pending" id="wf3"><div class="wf-dot"></div> Draft Email</div>
+      <div class="wf-arrow">›</div>
+      <div class="wf-step pending" id="wf4"><div class="wf-dot"></div> Human Review</div>
+      <div class="wf-arrow">›</div>
+      <div class="wf-step pending" id="wf5"><div class="wf-dot"></div> Log & Next Action</div>
+    </div>
+
+    <!-- Content -->
+    <div class="content-area" id="contentArea">
+      <div class="placeholder">
+        <div class="placeholder-icon">⚡</div>
+        <h3>Select an account to begin</h3>
+        <p>Choose an account from the queue to trigger the AI-powered collections workflow. The system will classify, draft, and guide you through each step.</p>
+      </div>
+    </div>
+
+    <!-- Log -->
+    <div class="log-panel">
+      <div class="panel-title" style="padding: 10px 18px;">
+        System Log
+        <div class="ai-indicator"><div class="ai-dot"></div> AI Active</div>
+      </div>
+      <div class="log-entries" id="logEntries">
+        <div class="log-entry">
+          <span class="log-time">09:00:00</span>
+          <span class="log-type-system">[SYSTEM]</span>
+          <span class="log-msg">Collections Automation Flow initialized. 8 accounts in queue. Claude API ready.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const accounts = [
+  { id:'A1', name:'Titan Aerospace',       amount:195000, days:119, bucket:'91+ days', risk:'Critical', dispute:true,  reason:'Billing error',        contact:'CFO — Richard Holt',     region:'North America', lastContact:'Feb 1, 2025',  manager:'James Wu' },
+  { id:'A2', name:'Alliance Healthcare',   amount:156000, days:31,  bucket:'1-30 days',risk:'Critical', dispute:true,  reason:'Contract dispute',     contact:'VP Finance — Dana Park', region:'North America', lastContact:'Apr 8, 2025',  manager:'James Wu' },
+  { id:'A3', name:'RedStar Imports',       amount:38400,  days:98,  bucket:'91+ days', risk:'Critical', dispute:true,  reason:'Non-delivery claim',   contact:'Owner — Carlos Vega',    region:'LATAM',         lastContact:'Feb 28, 2025', manager:'Mark Torres' },
+  { id:'A4', name:'Apex Manufacturing',    amount:125000, days:61,  bucket:'61-90 days',risk:'Critical',dispute:true,  reason:'Service quality',      contact:'Procurement — Lee Jin',  region:'North America', lastContact:'Mar 20, 2025', manager:'James Wu' },
+  { id:'A5', name:'MedSupply Corp',        amount:47800,  days:83,  bucket:'61-90 days',risk:'High',    dispute:true,  reason:'Price discrepancy',    contact:'AP Manager — Tom Gray',  region:'LATAM',         lastContact:'Mar 5, 2025',  manager:'Mark Torres' },
+  { id:'A6', name:'Coastal Pharma',        amount:67400,  days:51,  bucket:'31-60 days',risk:'High',    dispute:false, reason:'',                     contact:'Finance Dir — Sara Kim', region:'North America', lastContact:'Mar 22, 2025', manager:'James Wu' },
+  { id:'A7', name:'TechFlow Solutions',    amount:12500,  days:88,  bucket:'61-90 days',risk:'High',    dispute:false, reason:'',                     contact:'AP Team — billing@tech', region:'EMEA',          lastContact:'Mar 10, 2025', manager:'Sarah Chen' },
+  { id:'A8', name:'BuildRight Construction',amount:28900, days:46,  bucket:'31-60 days',risk:'Medium',  dispute:true,  reason:'Quantity short',       contact:'Controller — Mike Ross', region:'North America', lastContact:'Mar 25, 2025', manager:'Mark Torres' },
+];
+
+let selectedAccount = null;
+let currentStep = 0;
+let stats = { processed: 0, sent: 0, escalated: 0 };
+let processedIds = new Set();
+
+// ── Render account list ──────────────────────────────────────────────────────
+function renderAccountList() {
+  const list = document.getElementById('accountList');
+  list.innerHTML = accounts.map(a => `
+    <div class="account-card ${processedIds.has(a.id) ? 'opacity-50' : ''} ${selectedAccount?.id === a.id ? 'active' : ''}"
+         onclick="selectAccount('${a.id}')" style="${processedIds.has(a.id) ? 'opacity:0.4;' : ''}">
+      <div class="ac-top">
+        <div class="ac-name">${a.name}</div>
+        <span class="risk-chip risk-${a.risk.toLowerCase()}">${a.risk}</span>
+      </div>
+      <div class="ac-top" style="margin-top:4px;">
+        <div class="ac-amount">$${a.amount.toLocaleString()}</div>
+        <div class="ac-meta"><span class="ac-days">${a.days}d outstanding</span></div>
+      </div>
+      <div class="ac-meta" style="margin-top:4px;">
+        <span>${a.bucket}</span>
+        ${a.dispute ? `<span style="color: var(--red);">⚠ Dispute</span>` : ''}
+        ${processedIds.has(a.id) ? `<span style="color: var(--green);">✓ Done</span>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+// ── Log ──────────────────────────────────────────────────────────────────────
+function addLog(type, msg) {
+  const now = new Date().toTimeString().slice(0,8);
+  const el = document.getElementById('logEntries');
+  const typeLabels = { ai:'[AI]', system:'[SYSTEM]', action:'[ACTION]', error:'[ERROR]' };
+  el.innerHTML += `<div class="log-entry">
+    <span class="log-time">${now}</span>
+    <span class="log-type-${type}">${typeLabels[type]||'[LOG]'}</span>
+    <span class="log-msg">${msg}</span>
+  </div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── Workflow steps ───────────────────────────────────────────────────────────
+function setStep(step) {
+  currentStep = step;
+  for (let i = 1; i <= 5; i++) {
+    const el = document.getElementById('wf' + i);
+    el.className = 'wf-step ' + (i < step ? 'done' : i === step ? 'active' : 'pending');
+  }
+}
+
+// ── Select account ───────────────────────────────────────────────────────────
+function selectAccount(id) {
+  selectedAccount = accounts.find(a => a.id === id);
+  renderAccountList();
+  setStep(1);
+  addLog('system', `Account selected: ${selectedAccount.name} — $${selectedAccount.amount.toLocaleString()} · ${selectedAccount.days} days`);
+  renderStep1();
+}
+
+// ── STEP 1: Account detail ───────────────────────────────────────────────────
+function renderStep1() {
+  const a = selectedAccount;
+  const riskColor = { Critical: 'red', High: 'gold', Medium: 'blue' }[a.risk] || 'blue';
+
+  document.getElementById('contentArea').innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📋 Account Details</div>
+        <span class="risk-chip risk-${a.risk.toLowerCase()}">${a.risk} Priority</span>
+      </div>
+      <div class="card-body">
+        <div class="detail-row"><span class="detail-label">Company</span><span class="detail-value">${a.name}</span></div>
+        <div class="detail-row"><span class="detail-label">Outstanding Balance</span><span class="detail-value gold">$${a.amount.toLocaleString()}</span></div>
+        <div class="detail-row"><span class="detail-label">Days Outstanding</span><span class="detail-value ${riskColor}">${a.days} days</span></div>
+        <div class="detail-row"><span class="detail-label">Aging Bucket</span><span class="detail-value">${a.bucket}</span></div>
+        <div class="detail-row"><span class="detail-label">Dispute</span><span class="detail-value ${a.dispute ? 'red' : 'green'}">${a.dispute ? '⚠ Yes — ' + a.reason : '✓ None'}</span></div>
+        <div class="detail-row"><span class="detail-label">Primary Contact</span><span class="detail-value">${a.contact}</span></div>
+        <div class="detail-row"><span class="detail-label">Region</span><span class="detail-value">${a.region}</span></div>
+        <div class="detail-row"><span class="detail-label">Account Manager</span><span class="detail-value">${a.manager}</span></div>
+        <div class="detail-row"><span class="detail-label">Last Contact</span><span class="detail-value">${a.lastContact || 'No contact logged'}</span></div>
+      </div>
+      <div class="action-row">
+        <button class="btn btn-primary" onclick="runClassification()">⚡ Run AI Classification →</button>
+        <button class="btn btn-secondary" onclick="selectAccount(null); document.getElementById('contentArea').innerHTML = '';">✕ Cancel</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📅 Contact History</div>
+      </div>
+      <div class="card-body">
+        <div class="timeline">
+          ${a.lastContact ? `
+          <div class="tl-item">
+            <div class="tl-dot" style="background: rgba(59,130,246,0.2); color: var(--mid);">📧</div>
+            <div class="tl-content">
+              <div class="tl-title">Email reminder sent</div>
+              <div class="tl-detail">Standard payment reminder. No response received.</div>
+              <div class="tl-date">${a.lastContact}</div>
+            </div>
+          </div>` : ''}
+          <div class="tl-item">
+            <div class="tl-dot" style="background: rgba(245,158,11,0.2); color: var(--orange);">🧾</div>
+            <div class="tl-content">
+              <div class="tl-title">Invoice issued</div>
+              <div class="tl-detail">Invoice for $${a.amount.toLocaleString()} sent. Net-30 payment terms.</div>
+              <div class="tl-date">${a.days} days ago</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot" style="background: rgba(16,185,129,0.2); color: var(--green);">✓</div>
+            <div class="tl-content">
+              <div class="tl-title">Account onboarded</div>
+              <div class="tl-detail">Customer record created. Credit terms approved.</div>
+              <div class="tl-date">Account active</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  setStep(1);
+}
+
+// ── STEP 2: AI Classification ────────────────────────────────────────────────
+async function runClassification() {
+  setStep(2);
+  addLog('ai', `Classifying ${selectedAccount.name} — sending to Claude API...`);
+
+  document.getElementById('contentArea').innerHTML = `
+    <div class="placeholder">
+      <div class="placeholder-icon" style="animation: spin 1s linear infinite; display:inline-block;">⚙️</div>
+      <h3>AI Classification Running...</h3>
+      <p>Claude is analyzing the account profile, dispute status, aging, and contact history to determine the optimal collections strategy.</p>
+    </div>`;
+
+  const a = selectedAccount;
+  const prompt = `You are an expert AR collections strategist. Classify this account and determine the optimal outreach strategy.
+
+Account: ${a.name}
+Outstanding: $${a.amount.toLocaleString()}
+Days Outstanding: ${a.days}
+Aging Bucket: ${a.bucket}
+Dispute: ${a.dispute ? 'Yes — ' + a.reason : 'None'}
+Last Contact: ${a.lastContact || 'Never contacted'}
+Region: ${a.region}
+
+Respond ONLY with JSON:
+{
+  "strategy": "<one of: Standard Reminder | Urgent Follow-Up | Dispute Resolution | Legal Escalation | Payment Plan Offer | Executive Escalation>",
+  "tone": "<one of: Friendly | Professional | Firm | Urgent | Diplomatic>",
+  "confidence": <integer 80-99>,
+  "reasoning": "<2 sentence explanation>",
+  "escalate_to_legal": <true|false>,
+  "suggested_subject": "<email subject line>",
+  "payment_plan_recommended": <true|false>,
+  "next_action_days": <integer 1-14>,
+  "next_action": "<specific next step if no response>"
+}`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content.map(b => b.text||'').join('');
+    const classification = JSON.parse(text.replace(/```json|```/g,'').trim());
+    addLog('ai', `Classification complete: ${classification.strategy} · Tone: ${classification.tone} · Confidence: ${classification.confidence}%`);
+    renderStep2(classification);
+  } catch(e) {
+    addLog('error', 'API error: ' + e.message);
+    // Fallback classification
+    const fallback = {
+      strategy: a.days > 90 ? 'Legal Escalation' : a.dispute ? 'Dispute Resolution' : a.days > 60 ? 'Urgent Follow-Up' : 'Standard Reminder',
+      tone: a.days > 90 ? 'Firm' : a.dispute ? 'Diplomatic' : 'Professional',
+      confidence: 85,
+      reasoning: `Account is ${a.days} days overdue${a.dispute ? ' with an active dispute' : ''}. Recommended strategy based on aging bucket and dispute status.`,
+      escalate_to_legal: a.days > 90,
+      suggested_subject: `Payment Required: Invoice Outstanding ${a.days} Days — ${a.name}`,
+      payment_plan_recommended: a.amount > 50000,
+      next_action_days: a.days > 90 ? 3 : 7,
+      next_action: a.days > 90 ? 'Escalate to legal team if no response' : 'Schedule follow-up call'
+    };
+    addLog('system', 'Using offline classification (API unavailable)');
+    renderStep2(fallback);
+  }
+}
+
+function renderStep2(cls) {
+  const a = selectedAccount;
+  const stratColors = {
+    'Legal Escalation': 'var(--red)',
+    'Executive Escalation': 'var(--red)',
+    'Dispute Resolution': 'var(--orange)',
+    'Urgent Follow-Up': 'var(--orange)',
+    'Payment Plan Offer': 'var(--purple)',
+    'Standard Reminder': 'var(--blue)',
+  };
+  const color = stratColors[cls.strategy] || 'var(--blue)';
+
+  document.getElementById('contentArea').innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🧠 AI Classification Result</div>
+        <div class="ai-indicator"><div class="ai-dot"></div> Claude Sonnet</div>
+      </div>
+      <div class="card-body">
+        <div class="classification-box" style="border-color: ${color}40; background: linear-gradient(135deg, ${color}15, transparent);">
+          <div class="class-label" style="color: ${color};">⚡ Recommended Strategy</div>
+          <div class="class-value">${cls.strategy}</div>
+          <div class="class-confidence">Tone: ${cls.tone} · Confidence: ${cls.confidence}%</div>
+        </div>
+        <div style="font-size: 0.82rem; color: var(--text); line-height: 1.6; margin-bottom: 14px; padding: 10px 12px; background: var(--surface); border-radius: 8px;">
+          ${cls.reasoning}
+        </div>
+        <div class="detail-row"><span class="detail-label">Escalate to Legal</span><span class="detail-value ${cls.escalate_to_legal ? 'red' : 'green'}">${cls.escalate_to_legal ? '⚠ Yes — Recommended' : '✓ Not Required'}</span></div>
+        <div class="detail-row"><span class="detail-label">Payment Plan</span><span class="detail-value ${cls.payment_plan_recommended ? 'blue' : 'green'}">${cls.payment_plan_recommended ? 'Offer Payment Plan' : 'Not Needed'}</span></div>
+        <div class="detail-row"><span class="detail-label">Email Subject</span><span class="detail-value" style="font-size:0.72rem;">${cls.suggested_subject}</span></div>
+        <div class="detail-row"><span class="detail-label">If No Response</span><span class="detail-value">${cls.next_action} (${cls.next_action_days}d)</span></div>
+      </div>
+      <div class="action-row">
+        <button class="btn btn-primary" onclick="draftEmail(${JSON.stringify(cls).replace(/"/g,'&quot;')})">✍ Draft Email with AI →</button>
+        <button class="btn btn-secondary" onclick="renderStep1()">← Back</button>
+        ${cls.escalate_to_legal ? `<button class="btn btn-danger" onclick="escalate()">⚠ Escalate to Legal</button>` : ''}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">📊 Account Risk Summary</div></div>
+      <div class="card-body">
+        <div class="detail-row"><span class="detail-label">Amount at Risk</span><span class="detail-value red">$${a.amount.toLocaleString()}</span></div>
+        <div class="detail-row"><span class="detail-label">Days Outstanding</span><span class="detail-value red">${a.days} days</span></div>
+        <div class="detail-row"><span class="detail-label">Recovery Probability</span><span class="detail-value ${a.days > 90 ? 'red' : a.days > 60 ? 'gold' : 'green'}">${a.days > 90 ? '20%' : a.days > 60 ? '40%' : a.days > 30 ? '65%' : '85%'}</span></div>
+        <div class="detail-row"><span class="detail-label">Dispute Active</span><span class="detail-value ${a.dispute ? 'red':'green'}">${a.dispute ? '⚠ Yes: ' + a.reason : '✓ None'}</span></div>
+        <div class="detail-row"><span class="detail-label">Urgency Level</span><span class="detail-value ${a.risk === 'Critical' ? 'red' : a.risk === 'High' ? 'gold' : 'blue'}">${a.risk}</span></div>
+      </div>
+    </div>`;
+}
+
+// ── STEP 3: Draft email ──────────────────────────────────────────────────────
+async function draftEmail(cls) {
+  if (typeof cls === 'string') cls = JSON.parse(cls);
+  setStep(3);
+  addLog('ai', `Drafting ${cls.tone} ${cls.strategy} email for ${selectedAccount.name}...`);
+
+  document.getElementById('contentArea').innerHTML = `
+    <div class="card full-width">
+      <div class="card-header">
+        <div class="card-title">✍ AI Drafting Email...</div>
+        <div class="ai-indicator"><div class="ai-dot"></div> Streaming</div>
+      </div>
+      <div class="card-body">
+        <div class="email-draft">
+          <div class="email-headers">
+            <div class="email-hrow"><span class="email-hlabel">To:</span><span class="email-hval">${selectedAccount.contact}</span></div>
+            <div class="email-hrow"><span class="email-hlabel">Subject:</span><span class="email-hval">${cls.suggested_subject}</span></div>
+            <div class="email-hrow"><span class="email-hlabel">From:</span><span class="email-hval">Joel Solís — Accounts Receivable &lt;ar@company.com&gt;</span></div>
+          </div>
+          <div class="email-body streaming" id="emailBody">Generating...</div>
+        </div>
+      </div>
+    </div>`;
+
+  const a = selectedAccount;
+  const prompt = `You are a senior AR collections specialist writing a professional collections email.
+
+Strategy: ${cls.strategy}
+Tone: ${cls.tone}
+Company: ${a.name}
+Contact: ${a.contact}
+Amount: $${a.amount.toLocaleString()}
+Days Outstanding: ${a.days}
+Dispute: ${a.dispute ? 'Yes — ' + a.reason : 'None'}
+Payment Plan Recommended: ${cls.payment_plan_recommended}
+
+Write a complete, professional collections email body (no subject line). Include:
+- Professional greeting
+- Clear statement of the outstanding amount and days
+- ${a.dispute ? 'Acknowledge the dispute and propose resolution path' : 'Clear call to action for payment'}
+- ${cls.payment_plan_recommended ? 'Offer a structured payment plan option' : ''}
+- ${cls.strategy === 'Legal Escalation' || cls.strategy === 'Executive Escalation' ? 'Reference that legal review will follow if unresolved' : 'Friendly but firm closing'}
+- Professional signature block for Joel Solís, AR Collections Specialist
+
+Write the email body only. Be specific, professional, and human — not robotic.`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const emailText = data.content.map(b => b.text||'').join('');
+
+    // Simulate streaming
+    const bodyEl = document.getElementById('emailBody');
+    bodyEl.textContent = '';
+    bodyEl.classList.add('streaming');
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i < emailText.length) {
+        bodyEl.textContent += emailText[i++];
+        bodyEl.parentElement.scrollTop = bodyEl.parentElement.scrollHeight;
+      } else {
+        clearInterval(interval);
+        bodyEl.classList.remove('streaming');
+        addLog('ai', `Email draft complete — ${emailText.length} characters · Ready for human review`);
+        renderStep3Actions(cls, emailText, cls.suggested_subject);
+      }
+    }, 8);
+
+  } catch(e) {
+    const fallback = generateFallbackEmail(a, cls);
+    document.getElementById('emailBody').textContent = fallback;
+    document.getElementById('emailBody').classList.remove('streaming');
+    addLog('system', 'Using offline email template (API unavailable)');
+    renderStep3Actions(cls, fallback, cls.suggested_subject);
+  }
+}
+
+function generateFallbackEmail(a, cls) {
+  return `Dear ${a.contact.split('—')[0].trim()},
+
+I hope this message finds you well. I'm writing to follow up regarding invoice #${a.id.replace('A','INV-1006')} for $${a.amount.toLocaleString()}, which is now ${a.days} days past due.${a.dispute ? `
+
+I understand there is an outstanding ${a.reason} concern on this invoice. I'd like to work with you directly to resolve this matter as quickly as possible. Could we schedule a brief call this week to review the details together?` : `
+
+Despite previous reminders, we have not yet received payment for this balance. We value our business relationship with ${a.name} and would like to resolve this promptly.`}
+
+${cls.payment_plan_recommended ? `Given the invoice amount, we are pleased to offer a structured payment arrangement — 50% due within 5 business days and the remaining balance within 30 days. Please let me know if this would work for your team.
+
+` : ''}To make a payment or discuss this invoice, you can reach me directly at the contact information below.
+
+${a.days > 90 ? `Please note that if we are unable to reach a resolution within the next 7 business days, this account may be referred for further review.
+
+` : ''}Thank you for your prompt attention to this matter. I look forward to hearing from you.
+
+Best regards,
+Joel Solís
+AR Collections Specialist
+ar@company.com | +1 (555) 000-0000`;
+}
+
+function renderStep3Actions(cls, emailText, subject) {
+  const card = document.querySelector('.card.full-width');
+  const actionDiv = document.createElement('div');
+  actionDiv.className = 'action-row';
+  actionDiv.innerHTML = `
+    <button class="btn btn-success" onclick="approveAndSend('${subject.replace(/'/g,"\\'")}')">✓ Approve & Mark Sent</button>
+    <button class="btn btn-secondary" onclick="draftEmail(${JSON.stringify(cls).replace(/"/g,'&quot;')})">↻ Regenerate</button>
+    <button class="btn btn-secondary" onclick="runClassification()">← Reclassify</button>
+    ${cls.escalate_to_legal ? `<button class="btn btn-danger" onclick="escalate()">⚠ Escalate Instead</button>` : ''}`;
+  card.appendChild(actionDiv);
+  setStep(4);
+}
+
+// ── STEP 4 & 5: Approve / Log ────────────────────────────────────────────────
+function approveAndSend(subject) {
+  setStep(5);
+  stats.processed++;
+  stats.sent++;
+  processedIds.add(selectedAccount.id);
+  document.getElementById('stat-processed').textContent = stats.processed;
+  document.getElementById('stat-sent').textContent = stats.sent;
+  document.getElementById('queueCount').textContent = accounts.length - processedIds.size;
+
+  addLog('action', `Email approved & logged for ${selectedAccount.name} · Subject: "${subject}"`);
+  addLog('system', `Account marked processed. ${accounts.length - processedIds.size} remaining in queue.`);
+
+  const a = selectedAccount;
+  document.getElementById('contentArea').innerHTML = `
+    <div class="card full-width">
+      <div class="card-header">
+        <div class="card-title" style="color: var(--green);">✓ Action Complete</div>
+      </div>
+      <div class="card-body">
+        <div class="next-action">
+          <div class="na-label">✦ Logged & Scheduled</div>
+          <div class="na-action">${a.name} — $${a.amount.toLocaleString()}</div>
+          <div class="na-reason">Email marked as sent. Follow-up scheduled. Account status updated in system.</div>
+        </div>
+
+        <div class="timeline">
+          <div class="tl-item">
+            <div class="tl-dot" style="background: rgba(16,185,129,0.3); color: var(--green);">✓</div>
+            <div class="tl-content">
+              <div class="tl-title">Collections email sent</div>
+              <div class="tl-detail">Subject: "${subject}"</div>
+              <div class="tl-date">Today · ${new Date().toTimeString().slice(0,5)}</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot" style="background: rgba(245,158,11,0.2); color: var(--orange);">⏰</div>
+            <div class="tl-content">
+              <div class="tl-title">Follow-up reminder set</div>
+              <div class="tl-detail">If no response received, trigger next escalation step automatically.</div>
+              <div class="tl-date">In 3-7 days</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot" style="background: rgba(59,130,246,0.2); color: var(--mid);">📊</div>
+            <div class="tl-content">
+              <div class="tl-title">AR dashboard updated</div>
+              <div class="tl-detail">Contact logged. Last contact date refreshed. Status: Pending Response.</div>
+              <div class="tl-date">Automated</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px; padding: 12px 14px; background: var(--surface); border-radius: 8px; font-size: 0.8rem; color: var(--muted); line-height: 1.6;">
+          <strong style="color: var(--text);">What happens next:</strong> If payment is received → close invoice, update AR. If customer responds → AI classifies response and recommends next action. If no response in 7 days → escalate to next tier automatically.
+        </div>
+      </div>
+      <div class="action-row">
+        <button class="btn btn-primary" onclick="nextAccount()">→ Process Next Account</button>
+        <button class="btn btn-secondary" onclick="renderStep1()">← Back to ${a.name}</button>
+      </div>
+    </div>`;
+
+  renderAccountList();
+}
+
+function escalate() {
+  stats.processed++;
+  stats.escalated++;
+  processedIds.add(selectedAccount.id);
+  document.getElementById('stat-processed').textContent = stats.processed;
+  document.getElementById('stat-escalated').textContent = stats.escalated;
+  document.getElementById('queueCount').textContent = accounts.length - processedIds.size;
+  addLog('action', `ESCALATED: ${selectedAccount.name} — $${selectedAccount.amount.toLocaleString()} → Legal team notified`);
+  renderAccountList();
+  nextAccount();
+}
+
+function nextAccount() {
+  const next = accounts.find(a => !processedIds.has(a.id));
+  if (next) selectAccount(next.id);
+  else {
+    document.getElementById('contentArea').innerHTML = `
+      <div class="placeholder">
+        <div class="placeholder-icon">🎉</div>
+        <h3>Queue Complete</h3>
+        <p>All ${accounts.length} accounts have been processed. ${stats.sent} emails drafted, ${stats.escalated} escalated to legal.</p>
+      </div>`;
+    setStep(5);
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+renderAccountList();
+</script>
+</body>
+</html>
