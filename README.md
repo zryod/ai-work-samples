@@ -88,7 +88,7 @@ AntiGravity DevTools — prompt engineering and workflow testing
 Certifications: Google Certified AI Professional · English C2 (Stanford Language Center)
 Systems: NetSuite · SAP · Oracle R12 · Salesforce (SFDC) · MS Access · Zendesk · Excel Advanced
 📧 jrazielsolis@outlook.com
-🔗 LinkedIn
+🔗 LinkedIn: https://www.linkedin.com/in/joel-solis-ag/
 
 Tech Stack Used in These Projects
 AI:          Claude API (claude-sonnet-4-20250514)
